@@ -23,7 +23,7 @@ lazy val root = project
 
  */
 
-ThisBuild / scalaVersion := "3.0.0"
+ThisBuild / scalaVersion := "3.2.0"
 
 lazy val root = (project in file(".")).settings(
   name := "cats-effects-by-examples",
