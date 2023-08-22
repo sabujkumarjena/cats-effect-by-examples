@@ -1,6 +1,7 @@
 package catsEffectByExample.section2
 
 import scala.concurrent.Future
+import scala.io.StdIn
 
 object Effects {
 
@@ -48,10 +49,42 @@ object Effects {
     42
   })
 
+  /** Exercises
+    *   1. An IO which returns the current time of the system 2. An IO which
+    *      measures the duration of a computation 3. An IO which prints
+    *      something to the console 4. An IO which reads a line (a string) from
+    *      the standard input
+    */
 
+  //  1
+  val clock: MyIO[Long] = MyIO(() => System.currentTimeMillis())
+  //  2
+  def measure[A](computation: MyIO[A]): MyIO[Long] = for {
+    startTime <- clock
+    _ <- computation
+    endTime <- clock
+  } yield endTime - startTime
+
+  //  3
+  def putStrLn(line: String): MyIO[Unit] = MyIO(() => println(line))
+
+  //  4
+  val read: MyIO[String] = MyIO(()=> StdIn.readLine())
+
+  def testConsole(): Unit = {
+    val program = for {
+      line1 <- read
+      line2 <- read
+      _ <- putStrLn(line1 + line2)
+    } yield ()
+    program.unsafeRun()
+  }
   def main(args: Array[String]): Unit = {
     println("sabuj")
     anIO.unsafeRun()
+    val io1 = measure[Int](MyIO(() => { Thread.sleep(1000); 50 }))
+    println(io1.unsafeRun())
+    testConsole()
   }
 
 }
