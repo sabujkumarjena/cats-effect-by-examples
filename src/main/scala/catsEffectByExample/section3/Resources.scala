@@ -54,22 +54,35 @@ object Resources extends IOApp.Simple {
   def openFileScanner(path: String): IO[Scanner] = IO(
     new Scanner(new FileReader(new File(path)))
   )
-
+  def readLineByLine(scanner: Scanner): IO[Unit] =
+    if (scanner.hasNextLine)
+      IO(scanner.nextLine()).debug >> IO.sleep(100.millis) >> readLineByLine(
+        scanner
+      )
+    else IO.unit
 
   def bracketReadFile(path: String): IO[Unit] = for {
     fib <- (openFileScanner(path)
-      .bracket(scanner =>
-        (IO(scanner.next()).debug >> IO.sleep(100.millis)).foreverM
-      )(scanner => IO(scanner.close()).void))
+      .bracket(scanner => readLineByLine(scanner))(scanner =>
+        IO(s"Closing the file at $path").debug >> IO(scanner.close()).void
+      ))
       .start
-    _ <- IO.sleep(5.seconds) >> fib.cancel
+    _ <- IO.sleep(15.seconds) >> fib.cancel
   } yield ()
+
+  def bracketReadFile_v2(
+      path: String
+  ): IO[Unit] = // no need for fiber, bracket do it automatically
+    openFileScanner(path)
+      .bracket(scanner => readLineByLine(scanner))(scanner =>
+        IO(s"Closing the file at $path").debug >> IO(scanner.close()).void
+      )
 
   override def run: IO[Unit] = {
     // asyncFetchUrl.void
     // correctAsyncFetchUrl.void
     // bracketProgram
-    bracketReadFile(
+    bracketReadFile_v2(
       "/Users/sabuj/Downloads/cats-effect-by-examples/src/main/scala/catsEffectByExample/section3/Resources.scala"
     )
   }
