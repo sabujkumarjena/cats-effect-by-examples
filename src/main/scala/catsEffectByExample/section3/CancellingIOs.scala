@@ -101,13 +101,62 @@ object CancellingIOs extends IOApp.Simple {
     ).debug >> authFib.cancel
     _ <- authFib.join
   } yield ()
+
+  /*
+  Uncancelable calls are MASKS which suppress cancellation.
+  Poll calls are "gaps opened" in the uncancelable region.
+   */
+
+  /*
+  Exercises
+   */
+
+  // 1
+  val cancelBeforeMol = IO.canceled >> IO(42).debug
+  val uncancelableMol = IO.uncancelable(_ => cancelBeforeMol)
+
+  // uncancelable will eliminate ALL cancel points
+  // 2
+  val invincibleAuthProgram = for {
+    authFib <- IO.uncancelable(_ => authFlow).start
+    _ <- IO.sleep(4.seconds) >> IO(
+      "Authentication timeout, attempting cancel..."
+    ).debug >> authFib.cancel
+    _ <- authFib.join
+  } yield ()
+
+  // 3
+  def threeStepProgram(): IO[Unit] = {
+    val sequence = IO.uncancelable { poll =>
+      poll(
+        IO("cancelable").debug >> IO.sleep(1.second) >> IO(
+          "cancelable end"
+        ).debug
+      ) >>
+        IO("uncancelable").debug >> IO.sleep((1.second)) >> IO(
+          "uncancelable end"
+        ).debug >>
+        poll(IO(" second cancelable").debug >> IO.sleep(1.second) >> IO("second cancelable end").debug)
+    }
+
+    for {
+      fib <- sequence.start
+      _ <- IO.sleep(2200.millis) >> IO("CANCELING").debug >> fib.cancel
+      _ <- fib.join
+    } yield ()
+  }
+
   override def run: IO[Unit] = {
     // chainOfIOs.void
     // cancellationOfDoom //cancellable
     // cancellationOfDoom_v2 // uncancelable
     // authFlow
-    //authProgram
-    authProgram_v2
+    // authProgram
+    // authProgram_v2
+    // cancelBeforeMol.void
+    // uncancelableMol.void
+    // invincibleAuthProgram.void
+    threeStepProgram()
   }
 
 }
