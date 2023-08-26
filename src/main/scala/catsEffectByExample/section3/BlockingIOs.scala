@@ -8,30 +8,39 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 object BlockingIOs extends IOApp.Simple {
   val someSleeps = for {
-    _ <- IO.sleep(1.second).debug //SEMANTIC BLOCKING
+    _ <- IO.sleep(1.second).debug // SEMANTIC BLOCKING
     _ <- IO.sleep(1.second).debug
   } yield ()
-  //really blocking IOs
+  // really blocking IOs
   val aBlockingIO = IO.blocking {
     Thread.sleep(1000)
     println(s"[${Thread.currentThread().getName}] computed a blocking code")
     44
   } // will evaluate on  thread from ANOTHER thread pool specific for blocking calls
 
-  //yielding
+  // yielding
   val iosOnManyThreads = for {
     _ <- IO("first").debug
     _ <- IO.cede // a signal to yield control over the thread
     _ <- IO("second").debug
     _ <- IO.cede
     _ <- IO("third").debug
-  } yield()
+  } yield ()
 
-  val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
-  val thousandCedes = ( 1 to 100).map(IO.pure). reduce(_.debug >> IO.cede >> IO.sleep(100.millis) >> _.debug).evalOn(ec)
+  def testThousandsEffectsSwitch() = {
+    val ec: ExecutionContext =
+      ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))
+    val thousandCedes = (1 to 100)
+      .map(IO.pure)
+      .reduce(_.debug >> IO.cede >> IO.sleep(100.millis) >> _.debug)
+      .evalOn(ec)
+    thousandCedes
+  }
+
+  // blocking calls & IO.sleep and yield control over the calling thread automatically
   override def run: IO[Unit] = {
-    //aBlockingIO.void
-   // iosOnManyThreads
-   thousandCedes.void
+    // aBlockingIO.void
+    // iosOnManyThreads
+    testThousandsEffectsSwitch().void
   }
 }
