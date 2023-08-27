@@ -117,6 +117,9 @@ object Defers extends IOApp.Simple {
    *    - what do you do in case of cancellation (the hardest part)?
    */
   // 1
+
+  def ourRacePair[A, B](ioa: IO[A], iob: IO[B]): IO[Either[]]
+
   override def run: IO[Unit] = {
     // IO.unit
     //demoDeferred()
