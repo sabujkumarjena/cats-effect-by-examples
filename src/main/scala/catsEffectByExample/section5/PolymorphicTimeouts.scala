@@ -36,6 +36,7 @@ object PolymorphicTimeouts extends IOApp.Simple {
   }
   override def run: IO[Unit] = {
    // IO.unit
-   chainOfEffects_v2.void
+   //chainOfEffects_v2.void
+   timeout(IO(42), 3.seconds).debug.void
   }
 }
