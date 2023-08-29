@@ -92,7 +92,8 @@ object PolymorphicSync extends IOApp.Simple {
 
   override def run: IO[Unit] = {
    // IO.unit
-    aDelayedIO_v2.void
+   // aDelayedIO_v2.void
+    consoleReader()
   }
 
 }
