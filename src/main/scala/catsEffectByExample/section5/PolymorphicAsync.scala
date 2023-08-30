@@ -16,10 +16,12 @@ object PolymorphicAsync extends IOApp.Simple {
 
     def evalOn[A](fa: F[A], ec: ExecutionContext): F[A]
 
-    def async_[A](cb: (Either[Throwable, A] => Unit) => Unit): F[A] =
-      async(kb => map(pure(cb(kb)))(_ => None))
 
-    def never[A]: F[A] = async_(_ => ())
+
+    def async_[A](cb: (Either[Throwable, A] => Unit) => Unit): F[A] =
+      async(kb => map(pure(cb(kb)))(_ => None))  // no cancellation in async_
+
+    def never[A]: F[A] = async_(_ => ())  // callback is never invoked
   }
 
   val asyncIO = Async[IO] // given/implicit Async[IO]
@@ -88,6 +90,7 @@ object PolymorphicAsync extends IOApp.Simple {
   } yield (first, second)
 
   override def run: IO[Unit] = {
-    IO.unit
+    // IO.unit
+    asyncMeaningOfLife_v3.void
   }
 }
