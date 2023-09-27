@@ -6,3 +6,8 @@ object WhiteBoard extends IOApp.Simple {
     IO.println("learing cats effect")
 
 }
+object WhiteBoard2 {
+  def main(args: Array[String]): Unit = {
+    println("sabuj")
+  }
+}
